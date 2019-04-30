@@ -1,5 +1,6 @@
 from typing import Tuple
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -30,7 +31,8 @@ class APIKeyManager(models.Manager):
         except self.model.DoesNotExist:
             return False
 
-        return obj.is_valid(key)
+        if obj.is_valid(key):
+            return obj
 
 
 class APIKey(models.Model):
@@ -38,7 +40,9 @@ class APIKey(models.Model):
 
     id = models.CharField(max_length=100, unique=True, primary_key=True)
     created = models.DateTimeField(auto_now_add=True, db_index=True)
-    name = models.CharField(max_length=50, blank=False, default=None)
+    name = models.CharField(max_length=50, null=True, blank=False, default=None)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=False, default=None, related_name='api_keys', on_delete=models.CASCADE)
     revoked = models.BooleanField(
         blank=True,
         default=False,

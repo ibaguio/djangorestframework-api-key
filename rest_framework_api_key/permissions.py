@@ -13,7 +13,11 @@ class HasAPIKey(permissions.BasePermission):
         if not key:
             return False
 
-        return APIKey.objects.is_valid(key)
+        api_key = APIKey.objects.is_valid(key)
+        if api_key:
+            request.user = api_key.user
+
+        return api_key is not None
 
     def has_object_permission(self, request, view, obj):
         return self.has_permission(request, view)
@@ -21,7 +25,6 @@ class HasAPIKey(permissions.BasePermission):
 
 def _get_key(request) -> typing.Optional[str]:
     custom_header = getattr(settings, "API_KEY_CUSTOM_HEADER", None)
-
     if custom_header is not None:
         return _get_key_from_custom_header(request, custom_header)
 
